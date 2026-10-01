@@ -5,8 +5,7 @@
   "type": "module",
 "scripts": {
   "dev": "vite",
-  "build": "npm install --legacy-peer-deps && vite build",
-  "preview": "vite preview"
+  "build": "vite build"
 },
   "dependencies": {
     "@google/genai": "^2.4.0",
