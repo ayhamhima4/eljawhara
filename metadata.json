@@ -1,0 +1,6 @@
+{
+  "name": "فنون الحلويات - Baking & Pastry",
+  "description": "متجر متكامل لمستلزمات الحلويات والكعك: قوالب سيليكون، أدوات تزيين، عبوات، وشوكولاتة وملونات احترافية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
