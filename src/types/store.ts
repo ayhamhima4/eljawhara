@@ -10,6 +10,7 @@ export interface Product {
   reviewsCount: number;
   viewsCount: number; // Real database views tracking
   stock: number;
+  unit?: string;
   expiryDate?: string; // YYYY-MM-DD or ISO string for sensitive baking ingredients (chocolate, colors, yeast)
   image: string;
   description: string;

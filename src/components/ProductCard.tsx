@@ -35,14 +35,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenDetails
       <div>
         {/* Product Image & Stock Badge */}
         <div className="relative w-full aspect-square rounded-xl bg-[#fef8f4] overflow-hidden mb-2">
-          <img
-            src={product.image}
-            alt={product.name}
-            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-              isOutOfStock ? 'grayscale-[35%]' : ''
-            }`}
-            loading="lazy"
-          />
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                isOutOfStock ? 'grayscale-[35%]' : ''
+              }`}
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs text-[#82746e]">
+              لا توجد صورة
+            </div>
+          )}
 
           {/* Stock Availability Badge */}
           {isOutOfStock ? (
@@ -76,6 +82,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onOpenDetails
         <h4 className="text-[13px] sm:text-[14px] text-[#1d1b19] font-medium line-clamp-2 leading-snug h-[38px] group-hover:text-[#9e3d50] transition-colors">
           {product.name}
         </h4>
+        <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-[#82746e]">
+          <span className="truncate">{product.categoryNameAr}</span>
+          <span className="shrink-0">{product.stock} {product.unit || 'قطعة'}</span>
+        </div>
       </div>
 
       {/* Price & Add to Cart Action */}

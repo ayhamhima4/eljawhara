@@ -9,15 +9,16 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrderSuccessModal } from './components/OrderSuccessModal';
-import { fetchProducts, fetchCategories, trackProductView, sendHeartbeat, fetchSyncVersion } from './services/api';
+import { supabase } from './supabaseClient';
+import { trackProductView, sendHeartbeat } from './services/api';
 import type { Product, Category, Order } from './types/store';
 
 const StoreContent: React.FC = () => {
   const { notification } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dbVersion, setDbVersion] = useState<number>(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Filters & Search
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
