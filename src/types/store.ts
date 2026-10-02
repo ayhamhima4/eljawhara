@@ -4,6 +4,7 @@ export interface Product {
   nameEn?: string;
   category: 'silicone-molds' | 'decorating-tools' | 'baking-pans' | 'chocolate-colors' | 'packaging';
   categoryNameAr: string;
+  // Monetary values throughout the store are denominated in Algerian dinars (DZD).
   price: number;
   originalPrice?: number;
   rating: number;
@@ -42,6 +43,7 @@ export interface CartItem {
 export interface OrderItem {
   productId: string;
   name: string;
+  // Price per item in Algerian dinars (DZD).
   price: number;
   quantity: number;
   image: string;
@@ -59,6 +61,7 @@ export interface Order {
   notes?: string;
   payment_method: 'cod' | 'edahabia';
   items: OrderItem[];
+  // Order amounts in Algerian dinars (DZD).
   subtotal: number;
   shippingFee: number;
   discount: number;
@@ -72,6 +75,7 @@ export interface Deal {
   title: string;
   subtitle: string;
   bundleProduct: Product;
+  // Deal amounts in Algerian dinars (DZD).
   discountedPrice: number;
   originalPrice: number;
   reservedPercent: number;
@@ -79,6 +83,7 @@ export interface Deal {
 }
 
 export interface StoreStats {
+  // Sales total in Algerian dinars (DZD).
   totalSales: number;
   totalOrders: number;
   totalProducts: number;

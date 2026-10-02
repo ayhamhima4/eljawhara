@@ -11,10 +11,7 @@ import {
 } from '../services/api';
 
 const formatPrice = (amount: number) =>
-  new Intl.NumberFormat('ar-DZ', {
-    style: 'currency',
-    currency: 'DZD',
-  }).format(amount);
+  `${new Intl.NumberFormat('fr-DZ').format(amount)} د.ج`;
 
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<StoreStats | null>(null);
