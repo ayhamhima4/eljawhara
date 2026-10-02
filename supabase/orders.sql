@@ -31,8 +31,24 @@ create policy "Admins can update orders"
   with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 grant select, update on public.orders to authenticated;
+grant insert on public.orders to anon, authenticated;
 grant all on public.orders to service_role;
 revoke all on public.orders from anon;
+grant insert on public.orders to anon;
+
+drop policy if exists "Customers can place orders" on public.orders;
+create policy "Customers can place orders"
+  on public.orders for insert to anon, authenticated
+  with check (
+    status = 'pending'
+    and length(trim(customer_name)) between 2 and 150
+    and length(trim(phone)) between 9 and 30
+    and length(trim(wilaya)) between 2 and 100
+    and length(trim(address)) between 3 and 500
+    and jsonb_typeof(items) = 'array'
+    and jsonb_array_length(items) > 0
+    and abs(total - greatest(0, subtotal + shipping_fee - discount)) < 0.01
+  );
 
 create or replace function public.place_store_order(
   p_customer jsonb,

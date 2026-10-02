@@ -30,10 +30,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
     subtotal,
     shippingFee,
     discount,
-    appliedCoupon,
     total,
     clearCart,
-    setNotification,
   } = useCart();
 
   const [fullName, setFullName] = useState('');
@@ -67,48 +65,61 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
     try {
       setIsSubmitting(true);
 
-      const orderPayload = {
-        customer: {
-          fullName: fullName.trim(),
-          phone: phone.trim(),
-          wilaya,
-          address: address.trim(),
-          notes: notes.trim(),
-          paymentMethod,
-        },
-        items: items.map((item) => ({
+      if (items.length === 0) {
+        throw new Error('سلة التسوق فارغة');
+      }
+
+      const createdAt = new Date().toISOString();
+      const orderNumber = `BK-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+      const orderItems = items.map((item) => ({
           productId: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
           quantity: item.quantity,
-        })),
+          image: item.product.image,
+        }));
+      const customer = {
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        wilaya,
+        address: address.trim(),
+        notes: notes.trim(),
+        paymentMethod,
+      };
+      const order: Order = {
+        id: crypto.randomUUID(),
+        orderNumber,
+        customer,
+        items: orderItems,
+        subtotal,
         shippingFee,
         discount,
-        coupon: appliedCoupon,
+        total,
+        status: 'pending',
+        createdAt,
       };
 
-      const { data, error } = await supabase.functions.invoke('create-order', {
-        body: orderPayload,
+      const { error } = await supabase.from('orders').insert({
+        order_number: order.orderNumber,
+        customer_name: customer.fullName,
+        phone: customer.phone,
+        wilaya: customer.wilaya,
+        address: customer.address,
+        notes: customer.notes || null,
+        payment_method: customer.paymentMethod,
+        items: orderItems,
+        subtotal: order.subtotal,
+        shipping_fee: order.shippingFee,
+        discount: order.discount,
+        total: order.total,
+        status: order.status,
+        created_at: order.createdAt,
       });
-      if (error) {
-        let message = error.message || 'تعذر الاتصال بخدمة تسجيل الطلب';
-        try {
-          const response = (error as { context?: Response }).context;
-          const responseBody = await response?.json();
-          if (responseBody?.error) message = responseBody.error;
-        } catch {
-          // Keep the SDK message if the response is not JSON.
-        }
-        throw new Error(message);
-      }
-      if (!data?.success || !data.order) {
-        throw new Error(data?.error || 'لم يتم تأكيد حفظ الطلب');
-      }
+      if (error) throw new Error(error.message || 'تعذر حفظ الطلب في قاعدة البيانات');
 
       clearCart();
       setIsCheckoutOpen(false);
-      onOrderSuccess(data.order as Order);
-      if (data.telegramSent === false) {
-        setNotification('تم حفظ طلبك، لكن تعذر إرسال إشعار تيليجرام. سيظهر في لوحة التحكم.');
-      }
+      onOrderSuccess(order);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'حدث خطأ أثناء تأكيد الطلب، يرجى المحاولة مرة أخرى');
     } finally {
