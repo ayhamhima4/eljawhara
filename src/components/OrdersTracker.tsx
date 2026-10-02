@@ -28,8 +28,8 @@ export const OrdersTracker: React.FC = () => {
     const q = searchCode.trim().toLowerCase();
     return (
       o.orderNumber.toLowerCase().includes(q) ||
-      o.customer.phone.includes(q) ||
-      o.customer.fullName.toLowerCase().includes(q)
+      o.phone.includes(q) ||
+      o.full_name.toLowerCase().includes(q)
     );
   });
 
@@ -206,7 +206,7 @@ export const OrdersTracker: React.FC = () => {
                     <span className="material-symbols-outlined text-[15px] text-[#9e3d50]">
                       pin_drop
                     </span>
-                    <span>{order.customer.fullName} ({order.customer.wilaya})</span>
+                    <span>{order.full_name} ({order.wilaya})</span>
                   </div>
                   <div className="font-bold text-sm text-[#9e3d50]">
                     الإجمالي: {order.total} د.ج

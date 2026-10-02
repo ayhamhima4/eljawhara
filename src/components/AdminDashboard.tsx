@@ -441,22 +441,24 @@ export const AdminDashboard: React.FC = () => {
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <span className="font-mono font-bold text-xs text-[#43271a]">{o.orderNumber}</span>
+                    <span className="font-mono font-bold text-xs text-[#43271a]">
+                      {o.orderNumber || o.id.slice(0, 8)}
+                    </span>
                     <span className="text-[11px] text-[#82746e] mr-2">
-                      {o.customer.fullName} ({o.customer.phone})
+                      {o.full_name} ({o.phone})
                     </span>
                   </div>
                   <span className="text-sm font-bold text-[#9e3d50]">{o.total} د.ج</span>
                 </div>
 
                 <div className="text-xs text-[#50443f] bg-[#fef8f4] p-2.5 rounded-xl border border-[#f3ede9]">
-                  <p><strong>العنوان:</strong> {o.customer.wilaya} - {o.customer.address}</p>
-                  {o.customer.notes && <p className="text-[11px] text-[#82746e] mt-0.5"><strong>ملاحظة:</strong> {o.customer.notes}</p>}
+                  <p><strong>العنوان:</strong> {o.wilaya} - {o.address}</p>
+                  {o.notes && <p className="text-[11px] text-[#82746e] mt-0.5"><strong>ملاحظة:</strong> {o.notes}</p>}
                   <ul className="mt-2 space-y-1">
-                    {o.items.map((item) => (
-                      <li key={item.productId} className="flex justify-between gap-2">
-                        <span>{item.name} × {item.quantity}</span>
-                        <span className="shrink-0">{item.price * item.quantity} د.ج</span>
+                    {Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
+                      <li key={idx} className="flex justify-between gap-2">
+                        <span>{item.name || item.productName} × {item.quantity}</span>
+                        <span className="shrink-0">{(item.price || 0) * (item.quantity || 1)} د.ج</span>
                       </li>
                     ))}
                   </ul>

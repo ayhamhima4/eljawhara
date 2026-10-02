@@ -124,7 +124,24 @@ export async function createOrder(payload: {
 export async function fetchOrders(): Promise<Order[]> {
   const res = await fetch('/api/orders');
   if (!res.ok) throw new Error('فشل جلب الطلبات');
-  return res.json();
+  const rows = await res.json();
+  return rows.map((row: any): Order => ({
+    id: row.id,
+    orderNumber: row.orderNumber ?? row.order_number,
+    full_name: row.full_name ?? row.customer_name ?? row.customer?.fullName ?? '',
+    phone: row.phone ?? row.customer?.phone ?? '',
+    wilaya: row.wilaya ?? row.customer?.wilaya ?? '',
+    address: row.address ?? row.customer?.address ?? '',
+    notes: row.notes ?? row.customer?.notes ?? undefined,
+    payment_method: row.payment_method ?? row.customer?.paymentMethod ?? 'cod',
+    items: row.items,
+    subtotal: Number(row.subtotal),
+    shippingFee: Number(row.shippingFee ?? row.shipping_fee),
+    discount: Number(row.discount),
+    total: Number(row.total),
+    status: row.status,
+    createdAt: row.createdAt ?? row.created_at,
+  }));
 }
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<Order> {

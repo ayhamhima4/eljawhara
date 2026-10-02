@@ -1,7 +1,7 @@
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   order_number text not null unique,
-  customer_name text not null,
+  full_name text not null,
   phone text not null,
   wilaya text not null,
   address text not null,
@@ -41,7 +41,7 @@ create policy "Customers can place orders"
   on public.orders for insert to anon, authenticated
   with check (
     status = 'pending'
-    and length(trim(customer_name)) between 2 and 150
+    and length(trim(full_name)) between 2 and 150
     and length(trim(phone)) between 9 and 30
     and length(trim(wilaya)) between 2 and 100
     and length(trim(address)) between 3 and 500
@@ -128,7 +128,7 @@ begin
   end;
 
   insert into public.orders (
-    order_number, customer_name, phone, wilaya, address, notes,
+    order_number, full_name, phone, wilaya, address, notes,
     payment_method, items, subtotal, shipping_fee, discount, total, status
   ) values (
     'BK-' || to_char(now(), 'YYYY') || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6)),

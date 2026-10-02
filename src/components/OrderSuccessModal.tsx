@@ -65,16 +65,16 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({ order, onC
         <div className="bg-[#fef8f4] p-3 rounded-2xl border border-[#f3ede9] text-xs space-y-1 text-right mb-5">
           <div className="flex justify-between text-[#82746e]">
             <span>المستلم:</span>
-            <span className="font-semibold text-[#1d1b19]">{order.customer.fullName}</span>
+            <span className="font-semibold text-[#1d1b19]">{order.full_name}</span>
           </div>
           <div className="flex justify-between text-[#82746e]">
             <span>الولاية:</span>
-            <span className="font-semibold text-[#1d1b19]">{order.customer.wilaya}</span>
+            <span className="font-semibold text-[#1d1b19]">{order.wilaya}</span>
           </div>
           <div className="flex justify-between text-[#82746e]">
             <span>طريقة الدفع:</span>
             <span className="font-semibold text-[#1d1b19]">
-              {order.customer.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'بطاقة بنكية'}
+              {order.payment_method === 'cod' ? 'الدفع عند الاستلام' : 'بطاقة بنكية'}
             </span>
           </div>
           <div className="flex justify-between text-[#82746e] pt-1 border-t border-[#ede7e3]">

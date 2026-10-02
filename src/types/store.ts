@@ -47,21 +47,17 @@ export interface OrderItem {
   image: string;
 }
 
-export interface CustomerInfo {
-  fullName: string;
-  phone: string;
-  wilaya: string;
-  address: string;
-  notes?: string;
-  paymentMethod: 'cod' | 'edahabia';
-}
-
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface Order {
   id: string;
   orderNumber: string;
-  customer: CustomerInfo;
+  full_name: string;
+  phone: string;
+  wilaya: string;
+  address: string;
+  notes?: string;
+  payment_method: 'cod' | 'edahabia';
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;

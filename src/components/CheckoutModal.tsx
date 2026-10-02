@@ -78,18 +78,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
           quantity: item.quantity,
           image: item.product.image,
         }));
-      const customer = {
-        fullName: fullName.trim(),
+      const order: Order = {
+        id: crypto.randomUUID(),
+        orderNumber,
+        full_name: fullName.trim(),
         phone: phone.trim(),
         wilaya,
         address: address.trim(),
         notes: notes.trim(),
-        paymentMethod,
-      };
-      const order: Order = {
-        id: crypto.randomUUID(),
-        orderNumber,
-        customer,
+        payment_method: paymentMethod,
         items: orderItems,
         subtotal,
         shippingFee,
@@ -101,12 +98,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
 
       const { error } = await supabase.from('orders').insert({
         order_number: order.orderNumber,
-        customer_name: customer.fullName,
-        phone: customer.phone,
-        wilaya: customer.wilaya,
-        address: customer.address,
-        notes: customer.notes || null,
-        payment_method: customer.paymentMethod,
+        full_name: order.full_name,
+        phone: order.phone,
+        wilaya: order.wilaya,
+        address: order.address,
+        notes: order.notes || null,
+        payment_method: order.payment_method,
         items: orderItems,
         subtotal: order.subtotal,
         shipping_fee: order.shippingFee,

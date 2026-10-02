@@ -77,7 +77,7 @@ Deno.serve(async (request) => {
     id: row.id,
     orderNumber: row.order_number,
     customer: {
-      fullName: row.customer_name,
+      fullName: row.full_name ?? row.customer_name,
       phone: row.phone,
       wilaya: row.wilaya,
       address: row.address,
