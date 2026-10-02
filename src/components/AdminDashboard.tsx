@@ -10,6 +10,12 @@ import {
   deleteProduct,
 } from '../services/api';
 
+const formatPrice = (amount: number) =>
+  new Intl.NumberFormat('ar-DZ', {
+    style: 'currency',
+    currency: 'DZD',
+  }).format(amount);
+
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<StoreStats | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -210,7 +216,7 @@ export const AdminDashboard: React.FC = () => {
               إجمالي المبيعات
             </span>
             <span className="text-lg font-bold text-[#43271a] mt-1 font-mono">
-              {stats.totalSales} <span className="text-xs font-normal text-[#82746e]">د.ج</span>
+              {formatPrice(stats.totalSales)}
             </span>
           </div>
 
@@ -292,7 +298,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#82746e]">
                     <span>{prod.categoryNameAr}</span>
                     <span>•</span>
-                    <span className="font-bold text-[#43271a]">{prod.price} د.ج</span>
+                    <span className="font-bold text-[#43271a]">{formatPrice(prod.price)}</span>
                   </div>
                 </div>
               </div>
@@ -358,7 +364,7 @@ export const AdminDashboard: React.FC = () => {
                       {o.full_name} ({o.phone})
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-[#9e3d50]">{o.total} د.ج</span>
+                  <span className="text-sm font-bold text-[#9e3d50]">{formatPrice(o.total)}</span>
                 </div>
 
                 <div className="text-xs text-[#50443f] bg-[#fef8f4] p-2.5 rounded-xl border border-[#f3ede9]">
@@ -368,7 +374,9 @@ export const AdminDashboard: React.FC = () => {
                     {Array.isArray(o.items) && o.items.map((item: any, idx: number) => (
                       <li key={idx} className="flex justify-between gap-2">
                         <span>{item.name || item.productName} × {item.quantity}</span>
-                        <span className="shrink-0">{(item.price || 0) * (item.quantity || 1)} د.ج</span>
+                        <span className="shrink-0">
+                          {formatPrice((item.price || 0) * (item.quantity || 1))}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -439,7 +447,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[#50443f] font-medium mb-1">السعر (د.ج)</label>
+                  <label className="block text-[#50443f] font-medium mb-1">السعر (دينار جزائري)</label>
                   <input
                     type="number"
                     required
