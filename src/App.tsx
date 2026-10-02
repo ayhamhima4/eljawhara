@@ -9,6 +9,7 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrderSuccessModal } from './components/OrderSuccessModal';
+import { AdminDashboard } from './components/AdminDashboard';
 import { supabase } from './supabaseClient';
 import { trackProductView, sendHeartbeat } from './services/api';
 import type { Product, Category, Order } from './types/store';
@@ -317,9 +318,12 @@ const StoreContent: React.FC = () => {
 };
 
 export default function App() {
+  const isAdminPath = window.location.hash === '#/admin'
+    || window.location.pathname.replace(/\/+$/, '').endsWith('/admin');
+
   return (
     <CartProvider>
-      <StoreContent />
+      {isAdminPath ? <AdminDashboard /> : <StoreContent />}
     </CartProvider>
   );
 }

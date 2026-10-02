@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { createOrder } from '../services/api';
+import { supabase } from '../supabaseClient';
 import type { Order } from '../types/store';
 
 const ALGERIA_WILAYAS = [
@@ -30,8 +30,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
     subtotal,
     shippingFee,
     discount,
+    appliedCoupon,
     total,
     clearCart,
+    setNotification,
   } = useCart();
 
   const [fullName, setFullName] = useState('');
@@ -76,21 +78,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
         },
         items: items.map((item) => ({
           productId: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
           quantity: item.quantity,
-          image: item.product.image,
         })),
         shippingFee,
         discount,
+        coupon: appliedCoupon,
       };
 
-      const result = await createOrder(orderPayload);
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: orderPayload,
+      });
+      if (error) {
+        let message = error.message || 'تعذر الاتصال بخدمة تسجيل الطلب';
+        try {
+          const response = (error as { context?: Response }).context;
+          const responseBody = await response?.json();
+          if (responseBody?.error) message = responseBody.error;
+        } catch {
+          // Keep the SDK message if the response is not JSON.
+        }
+        throw new Error(message);
+      }
+      if (!data?.success || !data.order) {
+        throw new Error(data?.error || 'لم يتم تأكيد حفظ الطلب');
+      }
+
       clearCart();
       setIsCheckoutOpen(false);
-      onOrderSuccess(result.order);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'حدث خطأ أثناء تأكيد الطلب، يرجى المحاولة مرة أخرى');
+      onOrderSuccess(data.order as Order);
+      if (data.telegramSent === false) {
+        setNotification('تم حفظ طلبك، لكن تعذر إرسال إشعار تيليجرام. سيظهر في لوحة التحكم.');
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'حدث خطأ أثناء تأكيد الطلب، يرجى المحاولة مرة أخرى');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,8 +129,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOrderSuccess }) 
           </div>
           <button
             onClick={() => setIsCheckoutOpen(false)}
+            disabled={isSubmitting}
             aria-label="إغلاق"
-            className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#43271a] hover:bg-[#ede7e3] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#43271a] hover:bg-[#ede7e3] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
