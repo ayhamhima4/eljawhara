@@ -49,51 +49,82 @@ const StoreContent: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. REAL-TIME DATABASE SYNCHRONIZATION WITH ADMIN DASHBOARD
+  // 2. Load products from Supabase and keep the storefront in sync.
   useEffect(() => {
-    const checkSync = async () => {
+    let isMounted = true;
+
+    const loadProducts = async (showLoading = false) => {
       try {
-        const { version } = await fetchSyncVersion();
-        if (dbVersion > 0 && version !== dbVersion) {
-          // Admin updated prices, stock, or products in the database!
-          loadStoreData(false);
+        if (showLoading && isMounted) setLoading(true);
+        const { data, error } = await supabase.from('products').select('*');
+        if (error) throw error;
+
+        const mappedProducts: Product[] = (data ?? []).map((row) => {
+          const categoryNameAr = row.category || 'أخرى';
+          return {
+            id: row.id,
+            name: row.name,
+            category: (row.category || 'baking-pans') as Product['category'],
+            categoryNameAr,
+            unit: row.unit || 'قطعة',
+            price: Number(row.price) || 0,
+            stock: Number(row.stock) || 0,
+            image: row.image || '',
+            rating: 0,
+            reviewsCount: 0,
+            viewsCount: 0,
+            description: categoryNameAr,
+            specs: { material: categoryNameAr, foodGradeCertified: false },
+            createdAt: row.created_at || new Date().toISOString(),
+          };
+        });
+
+        if (isMounted) {
+          setProducts(mappedProducts);
+          setLoadError(null);
         }
-        setDbVersion(version);
-      } catch {
-        // quiet error
+      } catch (err) {
+        console.error('Error loading products from Supabase:', err);
+        if (isMounted) setLoadError('تعذر تحميل المنتجات. تحقق من الاتصال ثم أعد المحاولة.');
+      } finally {
+        if (showLoading && isMounted) setLoading(false);
       }
     };
 
-    const syncInterval = setInterval(checkSync, 10000);
-    return () => clearInterval(syncInterval);
-  }, [dbVersion]);
+    loadProducts(true);
+    const channel = supabase
+      .channel('store-products')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        loadProducts();
+      })
+      .subscribe();
 
-  const loadStoreData = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const [prods, cats, sync] = await Promise.all([
-        fetchProducts({
-          category: selectedCategory,
-          search: searchQuery,
-          sort: sortBy,
-          in_stock: inStockOnly,
-        }),
-        fetchCategories(),
-        fetchSyncVersion().catch(() => ({ version: 0 })),
-      ]);
-      setProducts(prods);
-      setCategories(cats);
-      if (sync.version) setDbVersion(sync.version);
-    } catch (err) {
-      console.error('Error loading store data:', err);
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
+    return () => {
+      isMounted = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [reloadKey]);
 
-  useEffect(() => {
-    loadStoreData(true);
-  }, [selectedCategory, searchQuery, inStockOnly, sortBy]);
+  const categories: Category[] = [
+    { id: 'all', slug: 'all', name: 'الكل', icon: 'apps' },
+    ...Array.from(new Set(products.map((product) => product.category))).map((category) => ({
+      id: category,
+      slug: category,
+      name: products.find((product) => product.category === category)?.categoryNameAr || category,
+      icon: 'category',
+    })),
+  ];
+
+  const visibleProducts = products
+    .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
+    .filter((product) => !inStockOnly || product.stock > 0)
+    .filter((product) => product.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .sort((first, second) => {
+      if (sortBy === 'price_asc') return first.price - second.price;
+      if (sortBy === 'price_desc') return second.price - first.price;
+      if (sortBy === 'rating') return second.rating - first.rating;
+      return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
+    });
 
   // 3. REAL PRODUCT VIEW TRACKING
   const handleSelectProduct = (product: Product) => {
@@ -110,7 +141,7 @@ const StoreContent: React.FC = () => {
 
   const handleOrderSuccess = (order: Order) => {
     setSuccessOrder(order);
-    loadStoreData();
+    setReloadKey((key) => key + 1);
   };
 
   return (
@@ -165,7 +196,7 @@ const StoreContent: React.FC = () => {
                 : categories.find((c) => c.slug === selectedCategory)?.name || 'المنتجات'}
             </h3>
             <span className="bg-[#ffd9dd]/60 text-[#400012] text-xs font-bold px-2 py-0.5 rounded-full">
-              {products.length} {products.length === 1 ? 'منتج' : 'منتجات'}
+              {visibleProducts.length} {visibleProducts.length === 1 ? 'منتج' : 'منتجات'}
             </span>
           </div>
 
@@ -201,7 +232,17 @@ const StoreContent: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : loadError ? (
+          <div className="bg-white p-8 rounded-2xl border border-red-200 text-center my-6">
+            <p className="text-sm font-semibold text-red-700">{loadError}</p>
+            <button
+              onClick={() => setReloadKey((key) => key + 1)}
+              className="mt-4 bg-[#43271a] text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-[#5c3d2e]"
+            >
+              إعادة المحاولة
+            </button>
+          </div>
+        ) : visibleProducts.length === 0 ? (
           <div className="bg-white p-10 rounded-3xl border border-[#ede7e3] text-center my-6">
             <div className="w-16 h-16 rounded-full bg-[#ffd9dd]/40 text-[#9e3d50] flex items-center justify-center mx-auto mb-3">
               <span className="material-symbols-outlined text-[32px]">search_off</span>
@@ -223,7 +264,7 @@ const StoreContent: React.FC = () => {
           </div>
         ) : (
           <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 pb-4">
-            {products.map((prod) => (
+            {visibleProducts.map((prod) => (
               <ProductCard
                 key={prod.id}
                 product={prod}
