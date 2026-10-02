@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { fetchAdminOrders, updateAdminOrderStatus } from '../services/orders';
 import type { Product, Order, OrderStatus, StoreStats } from '../types/store';
-import type { Session } from '@supabase/supabase-js';
 import {
   fetchProducts,
   fetchStats,
@@ -18,12 +17,7 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'orders'>('inventory');
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const isAdmin = session?.user.app_metadata?.role === 'admin';
+  const isAdmin = true;
 
   // Add Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -54,25 +48,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) {
-        setSession(data.session);
-        setAuthLoading(false);
-      }
-    });
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setAuthLoading(false);
-    });
-    return () => {
-      active = false;
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
+    if (!isAdmin) return;
     loadData();
     const channel = supabase
       .channel('admin-orders')
@@ -85,7 +61,7 @@ export const AdminDashboard: React.FC = () => {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [authLoading, isAdmin]);
+  }, [isAdmin]);
 
   const notify = (msg: string) => {
     setStatusMessage(msg);
@@ -175,66 +151,6 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleSignIn = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setAuthError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-    if (error) setAuthError('تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور.');
-  };
-
-  if (authLoading) {
-    return <div className="py-12 text-center text-sm text-[#82746e]">جارٍ التحقق من صلاحية الإدارة...</div>;
-  }
-
-  if (!session) {
-    return (
-      <div className="max-w-sm mx-auto mt-12 bg-white p-6 rounded-2xl border border-[#ede7e3]">
-        <h2 className="text-lg font-bold text-[#43271a] mb-4">دخول لوحة الإدارة</h2>
-        <form onSubmit={handleSignIn} className="space-y-3">
-          {authError && <p className="text-xs text-red-700">{authError}</p>}
-          <input
-            type="email"
-            required
-            autoComplete="username"
-            value={loginEmail}
-            onChange={(event) => setLoginEmail(event.target.value)}
-            placeholder="البريد الإلكتروني الإداري"
-            className="w-full bg-[#fef8f4] border border-[#ede7e3] rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#9e3d50]"
-          />
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={loginPassword}
-            onChange={(event) => setLoginPassword(event.target.value)}
-            placeholder="كلمة المرور"
-            className="w-full bg-[#fef8f4] border border-[#ede7e3] rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#9e3d50]"
-          />
-          <button className="w-full bg-[#43271a] text-white font-bold text-sm py-2.5 rounded-xl">
-            تسجيل الدخول
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="max-w-md mx-auto mt-12 bg-white p-6 rounded-2xl border border-[#ede7e3] text-center">
-        <p className="text-sm font-semibold text-[#43271a]">هذا الحساب لا يملك صلاحية الإدارة.</p>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="mt-4 bg-[#43271a] text-white text-xs font-semibold px-4 py-2 rounded-full"
-        >
-          تسجيل الخروج
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Toast Notification */}
@@ -267,12 +183,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="bg-[#f8f2ef] text-[#43271a] text-xs font-semibold px-3 py-2 rounded-full"
-          >
-            تسجيل الخروج
-          </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="bg-[#9e3d50] hover:bg-[#802639] text-white text-xs font-bold px-3.5 py-2 rounded-full flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
